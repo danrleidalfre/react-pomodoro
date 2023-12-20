@@ -1,10 +1,17 @@
-import { createContext, ReactNode, useReducer, useState } from 'react'
+import {
+  createContext,
+  ReactNode,
+  useEffect,
+  useReducer,
+  useState,
+} from 'react'
 import { Cycle, CyclesReducer } from '../reducers/cycles/reducer.ts'
 import {
   addNewCycleAction,
   finishCycleAction,
   interruptCycleAction,
 } from '../reducers/cycles/actions.ts'
+import { differenceInSeconds } from 'date-fns'
 
 interface CreateCycleData {
   task: string
@@ -31,16 +38,39 @@ interface CyclesContextProviderProps {
 export function CyclesContextProvider({
   children,
 }: CyclesContextProviderProps) {
-  const [cyclesState, dispatch] = useReducer(CyclesReducer, {
-    cycles: [],
-    activeCycleId: null,
-  })
+  const [cyclesState, dispatch] = useReducer(
+    CyclesReducer,
+    {
+      cycles: [],
+      activeCycleId: null,
+    },
+    (initialState) => {
+      const storedStateAsJSON = localStorage.getItem('@pomodoro:cycles')
 
-  const [secondsPassed, setSecondsPassed] = useState(0)
+      if (storedStateAsJSON) {
+        return JSON.parse(storedStateAsJSON)
+      }
+
+      return initialState
+    },
+  )
 
   const { cycles, activeCycleId } = cyclesState
-
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+
+  const [secondsPassed, setSecondsPassed] = useState(() => {
+    if (activeCycle) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+      return differenceInSeconds(new Date(), new Date(activeCycle.start))
+    }
+    return 0
+  })
+
+  useEffect(() => {
+    const stateJSON = JSON.stringify(cyclesState)
+    localStorage.setItem('@pomodoro:cycles', stateJSON)
+  }, [cyclesState])
 
   function onSetSecondsPassed(seconds: number) {
     setSecondsPassed(seconds)

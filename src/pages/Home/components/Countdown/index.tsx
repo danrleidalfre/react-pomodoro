@@ -9,7 +9,6 @@ export function Countdown() {
     activeCycleId,
     secondsPassed,
     markCycleFinished,
-    setActiveCycleIdNull,
     onSetSecondsPassed,
   } = useContext(CyclesContext)
 
@@ -39,13 +38,12 @@ export function Countdown() {
         // @ts-expect-error
         const secondsDifference = differenceInSeconds(
           new Date(),
-          activeCycle.start,
+          new Date(activeCycle.start),
         )
 
         if (secondsDifference >= totalSeconds) {
           markCycleFinished()
           onSetSecondsPassed(totalSeconds)
-          setActiveCycleIdNull()
           clearInterval(interval)
         } else {
           onSetSecondsPassed(secondsDifference)
